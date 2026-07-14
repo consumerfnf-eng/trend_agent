@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trend Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131313; --paper:#faf9f6; --hair:#e3e0da; --sub:#8a877f;
+    --rising:#c8451f; --new:#1a7a4a; --soft:#f1efe9;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px; line-height:1.55}
+  .serif{font-family:'Playfair Display',Georgia,serif}
+  a{color:inherit; text-decoration:none}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+
+  /* ── masthead ── */
+  .masthead{text-align:center; padding:30px 20px 0; border-bottom:1px solid var(--ink)}
+  .masthead .kicker{font-size:10px; letter-spacing:.34em; color:var(--sub); text-transform:uppercase}
+  .masthead h1{font-family:'Playfair Display',serif; font-weight:900; font-size:60px; letter-spacing:.02em; line-height:1.05}
+  .masthead h1 em{font-style:italic; font-weight:500}
+
+  /* issue slider */
+  .issuebar{display:flex; align-items:center; justify-content:center; gap:18px; padding:10px 0 12px}
+  .issuebar button{border:1px solid var(--hair); background:#fff; width:30px; height:30px; cursor:pointer;
+    font-size:14px; color:var(--sub)}
+  .issuebar .cur{font-size:12px; letter-spacing:.22em; text-transform:uppercase; font-weight:700; min-width:220px; text-align:center}
+  .issuebar .cur small{display:block; font-weight:400; letter-spacing:.14em; color:var(--sub); font-size:10px; margin-top:2px}
+  .issuebar .annual{font-size:10px; letter-spacing:.16em; text-transform:uppercase; border:1px solid var(--ink);
+    padding:6px 12px; margin-left:14px}
+
+  nav.axes{display:flex; justify-content:center; gap:24px; border-bottom:1px solid var(--hair);
+    padding:12px 20px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; flex-wrap:wrap}
+  nav.axes a{color:var(--sub); padding-bottom:2px}
+  nav.axes a.on{color:var(--ink); border-bottom:2px solid var(--ink)}
+  nav.axes a.util{margin-left:16px; color:var(--ink); font-weight:600}
+
+  /* ── badges ── */
+  .badge{display:inline-block; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    padding:3px 9px; font-weight:700}
+  .badge.rising{background:var(--rising); color:#fff}
+  .badge.new{background:var(--new); color:#fff}
+  .badge.ongoing{background:var(--soft); color:var(--sub)}
+  .pill{display:inline-block; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    border:1px solid var(--hair); padding:3px 8px; color:var(--sub)}
+
+  /* ── original sources strip (top) ── */
+  .srcstrip{border-bottom:1px solid var(--ink); padding:16px 0 22px}
+  .srctabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px}
+  .srctabs button{border:1px solid var(--ink); background:#fff; padding:7px 14px; font-size:10px;
+    letter-spacing:.16em; text-transform:uppercase; font-weight:700; cursor:pointer}
+  .srctabs button.on{background:var(--ink); color:#fff}
+  .doccards{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+  .doc{border:1px solid var(--hair); background:#fff}
+  .doc .thumb{aspect-ratio:16/9}
+  .doc .body{padding:10px 12px}
+  .doc .src{font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--rising); font-weight:700}
+  .doc h5{font-family:'Playfair Display',serif; font-size:15px; font-weight:700; line-height:1.25; margin:3px 0 4px}
+  .doc .sum{font-size:11px; color:var(--sub); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .doc .open{font-size:9px; letter-spacing:.14em; text-transform:uppercase; margin-top:8px; display:inline-block; border-bottom:1px solid var(--ink)}
+  .dt1{background:linear-gradient(140deg,#2f2b28,#6e6259 60%,#b7a99b)}
+  .dt2{background:linear-gradient(140deg,#e8e2d6,#c8bda9 55%,#8d8271)}
+  .dt3{background:linear-gradient(140deg,#dfe4e8,#a9b4bd 55%,#5a666f)}
+  .dt4{background:linear-gradient(140deg,#efe3da,#d3b5a1 55%,#8f6751)}
+
+  /* ── hero: movement of the month ── */
+  .hero{border-bottom:1px solid var(--ink); padding:38px 0 34px; display:grid; grid-template-columns:1.2fr .8fr; gap:40px}
+  .hero .eyebrow{font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--rising); font-weight:700; margin-bottom:12px}
+  .hero h2{font-family:'Playfair Display',serif; font-weight:700; font-size:50px; line-height:1.06}
+  .hero .dek{font-size:15px; color:#3c3a35; margin-top:14px; max-width:52ch}
+  .hero .numbers{display:flex; gap:32px; border-top:1px solid var(--hair); margin-top:20px; padding-top:16px}
+  .num .v{font-family:'Playfair Display',serif; font-size:30px; font-weight:700}
+  .num .v.up{color:var(--rising)}
+  .num .k{font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--sub)}
+  .evidence{display:flex; flex-direction:column; gap:12px}
+  .evidence .k{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sub)}
+  .evrow{display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center;
+    border:1px solid var(--hair); background:#fff; padding:8px}
+  .evrow .ph{width:72px; height:72px}
+  .evrow b{font-size:12px}
+  .evrow .m{font-size:11px; color:var(--sub)}
+  .ev1{background:linear-gradient(150deg,#e6d8c6,#a98e6d)}
+  .ev2{background:linear-gradient(150deg,#dfe3e6,#7e8b94)}
+  .ev3{background:linear-gradient(150deg,#e9dfe4,#a487a0)}
+
+  /* ── section heads ── */
+  .sec{display:flex; align-items:baseline; justify-content:space-between; margin:44px 0 18px;
+    border-bottom:1px solid var(--ink); padding-bottom:8px}
+  .sec h3{font-family:'Playfair Display',serif; font-size:24px; font-weight:700}
+  .sec .more{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--sub)}
+
+  /* ── rising now (expanded, clickable) ── */
+  .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:22px; row-gap:30px}
+  .tcard{cursor:pointer}
+  .tcard:hover h4{text-decoration:underline}
+  .tcard .ph{aspect-ratio:3/4; margin-bottom:10px; position:relative}
+  .tcard .ph .badge{position:absolute; top:10px; left:10px}
+  .tcard h4{font-family:'Playfair Display',serif; font-size:18px; font-weight:700; line-height:1.2}
+  .tcard .meta{font-size:11px; color:var(--sub); margin-top:3px}
+  .tcard .mom{font-weight:700; color:var(--rising)}
+  .ph1{background:linear-gradient(150deg,#e8ddcf,#b39b7e 60%,#5d4a38)}
+  .ph2{background:linear-gradient(150deg,#dfe3e6,#9aa6ad 55%,#3f4a52)}
+  .ph3{background:linear-gradient(150deg,#efe6e0,#c9a291 55%,#7a4f3c)}
+  .ph4{background:linear-gradient(150deg,#e4e8df,#a7b096 55%,#4c5540)}
+  .ph5{background:linear-gradient(150deg,#ece4ef,#b49cc0 55%,#5f4470)}
+  .ph6{background:linear-gradient(150deg,#f0e8da,#d2b273 55%,#8a6a2c)}
+  .ph7{background:linear-gradient(150deg,#e2e6ea,#8fa0b0 55%,#3a4a5a)}
+  .ph8{background:linear-gradient(150deg,#f0dede,#c98f8f 55%,#7a3f3f)}
+
+  /* ── trend card detail (opens on click) ── */
+  #detail{display:none; margin-top:8px}
+  #detail.open{display:block}
+  .article{display:grid; grid-template-columns:1.1fr .9fr; gap:34px; border:1px solid var(--ink); padding:24px; background:#fff}
+  .article .main .ph{aspect-ratio:4/5}
+  .article .main .credit{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--sub); margin-top:8px}
+  .scorecard h4{font-family:'Playfair Display',serif; font-size:30px; font-weight:700}
+  .scorecard .head{display:flex; gap:10px; align-items:center; margin-bottom:8px}
+  .scoregrid{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--hair); margin:14px 0}
+  .scoregrid div{padding:12px 14px; border-bottom:1px solid var(--hair)}
+  .scoregrid div:nth-child(odd){border-right:1px solid var(--hair)}
+  .scoregrid div:nth-last-child(-n+2){border-bottom:0}
+  .scoregrid .k{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--sub)}
+  .scoregrid .v{font-family:'Playfair Display',serif; font-size:22px; font-weight:700}
+  .scoregrid .v.up{color:var(--rising)}
+  .related{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px}
+  .related .ph{aspect-ratio:3/4; position:relative}
+  .related .srcl{position:absolute; bottom:6px; left:6px; font-size:9px; letter-spacing:.12em;
+    text-transform:uppercase; background:#fffd; padding:2px 6px}
+  .wornby{font-size:12px; margin-top:10px}
+  .wornby b{font-weight:700}
+  .sources{font-size:12px; color:var(--sub); border-top:1px solid var(--hair); margin-top:14px; padding-top:10px}
+  .sources b{color:var(--ink)}
+  .apply{background:var(--ink); color:var(--paper); padding:16px 18px; margin-top:16px}
+  .apply .k{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:#fffa; margin-bottom:6px}
+  .apply p{font-size:13px; line-height:1.6}
+  .closebtn{float:right; font-size:10px; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; color:var(--sub)}
+
+  /* ── brands ── */
+  .brands{display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-bottom:20px}
+  .bcard{border:1px solid var(--hair); padding:18px; background:#fff}
+  .bcard .tier{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sub)}
+  .bcard h4{font-family:'Playfair Display',serif; font-size:24px; font-weight:700; margin:4px 0 8px}
+  .bcard .links{font-size:12px; color:var(--sub)}
+  .bcard .links b{color:var(--ink)}
+  .bcard .worn{font-size:11px; margin-top:6px; color:var(--ink)}
+  .bcard .row{display:flex; justify-content:space-between; align-items:baseline; margin-top:12px;
+    border-top:1px solid var(--hair); padding-top:10px}
+  .bcard .mom{font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--rising)}
+
+
+  .doc .season{font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--sub); margin-bottom:2px}
+  .cnTag{display:inline-block; font-size:9px; letter-spacing:.12em; background:#b3261e; color:#fff;
+    padding:2px 6px; margin-left:6px; vertical-align:middle; font-weight:700}
+  #snsLib{display:none}
+  #snsLib.open{display:block}
+  .snsfilters{display:flex; gap:8px; margin-bottom:14px}
+  .snsfilters button{border:1px solid var(--hair); background:#fff; padding:6px 12px; font-size:10px;
+    letter-spacing:.14em; text-transform:uppercase; cursor:pointer; font-weight:700; color:var(--sub)}
+  .snsfilters button.on{border-color:var(--ink); color:var(--ink)}
+  .snswall{display:grid; grid-template-columns:repeat(6,1fr); gap:8px}
+  .snswall .ph{aspect-ratio:3/4; position:relative}
+  .snswall .srcl{position:absolute; bottom:5px; left:5px; font-size:8px; letter-spacing:.1em;
+    text-transform:uppercase; background:#fffd; padding:1px 5px}
+  @media (max-width:880px){ .snswall{grid-template-columns:repeat(3,1fr)} }
+
+  /* SNS Trend page */
+  #snsTrend{display:none}
+  #snsTrend.open{display:block}
+  .seasonf{display:flex; gap:8px; margin-bottom:18px}
+  .seasonf button{border:1px solid var(--hair); background:#fff; padding:6px 14px; font-size:10px;
+    letter-spacing:.16em; text-transform:uppercase; cursor:pointer; font-weight:700; color:var(--sub)}
+  .seasonf button.on{background:var(--ink); border-color:var(--ink); color:#fff}
+  .stcard{display:grid; grid-template-columns:1.15fr 1.1fr 1fr .95fr; gap:16px; margin-bottom:34px}
+  .panel .bar{background:var(--ink); color:#fff; text-align:center; font-size:10px;
+    letter-spacing:.2em; text-transform:uppercase; font-weight:700; padding:6px 8px; margin-bottom:10px}
+  .panel .subbar{background:var(--ink); color:#fff; text-align:center; font-size:9px;
+    letter-spacing:.16em; text-transform:uppercase; font-weight:700; padding:4px 8px; margin:10px 0 8px}
+  .stcard .mainph{aspect-ratio:4/5}
+  .stcard .season-eyebrow{font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--sub); margin-bottom:4px}
+  .stcard .scorecard h4{font-size:24px}
+  .refitem{display:grid; grid-template-columns:44px 1fr; gap:10px; align-items:center;
+    border-bottom:1px solid var(--hair); padding:8px 0}
+  .refitem .ph{width:44px; height:56px}
+  .refitem b{font-size:12px; display:block}
+  .refitem .m{font-size:11px; color:var(--sub)}
+  .refitem .rk{font-family:'Playfair Display',serif; font-weight:700}
+  .refnote{font-size:10px; color:var(--sub); margin-top:8px; letter-spacing:.06em}
+  .dpair{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .dpair .ph{aspect-ratio:3/4}
+  .dacct{display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:10px; text-align:center; color:var(--sub); margin-top:4px}
+  @media (max-width:980px){ .stcard{grid-template-columns:1fr 1fr} }
+  @media (max-width:640px){ .stcard{grid-template-columns:1fr} }
+
+  /* SNS Trend v5 */
+  body.snsview .hideable{display:none!important}
+  .yearf{display:flex; gap:8px; align-items:center; margin-bottom:10px}
+  .yearf button{border:1px solid var(--ink); background:#fff; padding:8px 18px; font-size:12px;
+    letter-spacing:.14em; font-weight:700; cursor:pointer}
+  .yearf button.on{background:var(--ink); color:#fff}
+  .bubblewrap{border:1px solid var(--ink); background:#fff; padding:16px 18px; margin-top:16px}
+  .bubhead{display:flex; justify-content:space-between; font-size:11px; letter-spacing:.08em; margin-bottom:8px}
+  .bubchart{position:relative; height:150px; border-bottom:1px solid var(--hair)}
+  .bub{position:absolute; border-radius:50%; background:#c9c5bb; transform:translateX(-50%)}
+  .bub.top{background:var(--rising)}
+  .bub-label{position:absolute; transform:translateX(-50%) rotate(-28deg); transform-origin:top left;
+    font-size:9px; color:var(--sub); top:100%; margin-top:8px; white-space:nowrap}
+  table.trlist{width:100%; border-collapse:collapse; margin-top:6px; background:#fff}
+  table.trlist th{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--sub);
+    border-bottom:1px solid var(--ink); padding:8px 10px; text-align:left}
+  table.trlist td{border-bottom:1px solid var(--hair); padding:10px; font-size:13px}
+  tr.trow{cursor:pointer}
+  tr.trow:hover .kw{text-decoration:underline}
+  tr.trow .kw{font-family:'Playfair Display',serif; font-weight:700; font-size:15px}
+  td.up,.trlist .up{color:var(--rising); font-weight:700}
+  tr.expander td{padding:0; border-bottom:0}
+  .exwrap{max-height:0; overflow:hidden; transition:max-height .35s ease; background:var(--paper)}
+  .exwrap.open{max-height:1200px; border-bottom:1px solid var(--hair)}
+  .exwrap .stcard{margin:16px 10px}
+
+  .realph{background-size:cover; background-position:top center}
+  .regionhead{font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--sub);
+    margin:22px 0 10px; border-bottom:1px solid var(--hair); padding-bottom:6px}
+
+  .viewf{display:flex; justify-content:center; gap:8px; padding:0 0 12px; flex-wrap:wrap}
+  .viewf button{border:1px solid var(--hair); background:#fff; padding:7px 14px; font-size:10px;
+    letter-spacing:.16em; text-transform:uppercase; font-weight:700; cursor:pointer; color:var(--sub)}
+  .viewf button.on{background:var(--ink); border-color:var(--ink); color:#fff}
+  .scopenote{background:var(--soft); border:1px solid var(--hair); padding:10px 14px; font-size:12px;
+    color:var(--sub); margin:14px 0 0; display:none}
+  .scopenote.show{display:block}
+  .scopenote b{color:var(--ink)}
+  footer{margin:54px 0 0; border-top:1px solid var(--ink); padding:18px 20px 40px; text-align:center;
+    font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sub)}
+
+  @media (max-width:880px){
+    .masthead h1{font-size:38px}
+    .hero{grid-template-columns:1fr}
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .doccards{grid-template-columns:repeat(2,1fr)}
+    .article{grid-template-columns:1fr}
+    .brands{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="kicker">Consumer Strategy · Trend Intelligence</div>
+  <h1>TREND <em>AGENT</em></h1>
+  <div class="issuebar">
+    <button id="prevIssue" title="Previous issue">‹</button>
+    <div class="cur" id="issueLabel">Loading…<small></small></div>
+    <button id="nextIssue" title="Next issue">›</button>
+  </div>
+  <div class="viewf" id="viewBtns">
+    <button class="on" data-v="monthly">Monthly Issue</button>
+    <button data-v="ss">SS Season 모아보기</button>
+    <button data-v="fw">FW Season 모아보기</button>
+    <button data-v="annual">Annual</button>
+    <button data-v="all">All-time 축적</button>
+  </div>
+</div>
+<nav class="axes" id="axisNav">
+  <a class="on" href="#" data-axis="all">All</a>
+  <a href="#" data-axis="movement">Movement</a><a href="#" data-axis="style">Style</a>
+  <a href="#" data-axis="silhouette">Silhouette</a><a href="#" data-axis="pattern_graphic">Pattern &amp; Graphic</a>
+  <a href="#" data-axis="color">Color</a><a href="#" data-axis="fabric">Fabric</a><a href="#" data-axis="detail">Detail</a>
+  <a class="util" href="#" id="navSnsLib">SNS Library</a>
+  <a class="util" href="#" id="navData">Data</a>
+</nav>
+
+<div class="wrap">
+  <div class="scopenote" id="scopeNote"></div>
+
+  <!-- ORIGINAL SOURCES -->
+  <div class="srcstrip">
+    <div class="srctabs" id="srcTabs">
+      <button class="on" data-t="newsletter_kr">KR Newsletter</button>
+      <button data-t="newsletter_gl">GL Newsletter</button>
+      <button data-t="wgsn">WGSN / Peclers</button>
+      <button data-t="rank">Retail Ranking</button>
+      <button data-t="runway">Runway</button>
+    </div>
+    <div class="doccards" id="docCards"></div>
+  </div>
+
+  <!-- HERO: movement -->
+  <div class="hero" id="hero"></div>
+
+  <!-- RISING NOW -->
+  <div class="sec"><h3>Rising Now</h3><span class="more" id="rnScope"></span></div>
+  <div class="grid" id="risingGrid"></div>
+
+  <!-- TREND CARD detail -->
+  <div id="detail"></div>
+
+  <!-- SNS LIBRARY -->
+  <div id="snsLib">
+    <div class="sec"><h3>SNS Library</h3><span class="closebtn" id="snsLibClose">Close ✕</span></div>
+    <div class="snsfilters" id="snsFilters">
+      <button class="on" data-f="all">All</button><button data-f="insta">Instagram</button>
+      <button data-f="xiaohongshu">Xiaohongshu</button><button data-f="celeb">Celeb only</button>
+    </div>
+    <div class="snswall" id="snsWall"></div>
+  </div>
+
+  <!-- RISING BRANDS -->
+  <div class="sec"><h3>Rising Brands</h3><span class="more">from brand_scores · split by region</span></div>
+  <div class="regionhead">KR</div>
+  <div class="brands" id="brandsKR"></div>
+  <div class="regionhead">Global</div>
+  <div class="brands" id="brandsGL"></div>
+
+  <!-- DATA VIEW -->
+  <div id="dataView" style="display:none">
+    <div class="sec"><h3>Data — monthly_scores</h3><span class="closebtn" id="dataClose">Close ✕</span></div>
+    <table class="trlist" id="dataTable"></table>
+  </div>
+</div>
+<footer>Trend Agent · auto-assembled from the ledger · Consumer Strategy Team</footer>
+
+<script>
+
+'use strict';
+/* ════════════════ CONFIG — 게시된 CSV URL을 여기에 붙여넣으세요 ════════════════
+   시트에서: 파일 → 공유 → 웹에 게시 → 탭별 CSV URL (7개) */
+var CONFIG = {
+  /* ↓ 시트에서 [파일 → 공유 → 웹에 게시 → 탭별 CSV]로 만든 URL 7개를 붙여넣으세요.
+     각 URL에 gid=숫자 가 들어 있어야 합니다 (탭별 게시). */
+  csv: {
+    entities:       'PASTE_ENTITIES_CSV_URL',
+    images:         'PASTE_IMAGES_CSV_URL',
+    documents:      'PASTE_DOCUMENTS_CSV_URL',
+    rankings:       'PASTE_RANKINGS_CSV_URL',
+    monthly_scores: 'PASTE_MONTHLY_SCORES_CSV_URL',
+    brand_scores:   'PASTE_BRAND_SCORES_CSV_URL',
+    brands:         'PASTE_BRANDS_CSV_URL'
+  },
+  ssMonths: [3,4,5,6,7,8],
+  fwMonths: [9,10,11,12]
+};
+
+/* ─────────── data layer ─────────── */
+var DB = {};              // table → array of row objects
+var ST = { view:'monthly', ym:null, months:[], axis:'all', srcTab:'newsletter_kr' };
+
+function parseCSV(text){
+  var rows=[], row=[], cur='', q=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++;
+      row.push(cur); cur=''; if(row.some(function(v){return v!=='';})) rows.push(row); row=[]; }
+    else cur+=c;
+  }
+  if(cur!==''||row.length){ row.push(cur); if(row.some(function(v){return v!=='';})) rows.push(row); }
+  return rows;
+}
+function toObjects(rows){
+  if(rows.length<1) return [];
+  var hdr=rows[0];
+  return rows.slice(2).map(function(r){ // row2 = 설명 행 → 스킵
+    var o={}; hdr.forEach(function(h,i){ o[h]=(r[i]!==undefined?r[i]:''); }); return o;
+  });
+}
+function loadAll(){
+  var names=Object.keys(CONFIG.csv);
+  var bad=names.filter(function(n){ return CONFIG.csv[n].indexOf('PASTE_')===0; });
+  if(bad.length){ document.getElementById('issueLabel').innerHTML=
+    'CONFIG 미설정<small>index.html 상단 CONFIG에 시트 게시 CSV URL '+bad.length+'개를 붙여넣으세요</small>'; return; }
+  Promise.all(names.map(function(n){
+    return fetch(CONFIG.csv[n]).then(function(r){ return r.text(); })
+      .then(function(t){ DB[n]=toObjects(parseCSV(t)); });
+  })).then(init).catch(function(e){
+    document.getElementById('issueLabel').innerHTML='데이터 로드 실패<small>'+e.message+'</small>';
+  });
+}
+
+/* ─────────── helpers ─────────── */
+function ymNum(ym){ var p=String(ym).slice(0,7).split('-'); return Number(p[0])*12+Number(p[1]); }
+function seasonOf(ym){
+  var p=String(ym).split('-'); var y=Number(p[0]), m=Number(p[1]);
+  if(CONFIG.ssMonths.indexOf(m)>=0) return String(y).slice(2)+'SS';
+  if(m<=2) return String(y-1).slice(2)+'FW';
+  return String(y).slice(2)+'FW';
+}
+function inWindow(ym){
+  if(ST.view==='all') return true;
+  if(ST.view==='monthly') return String(ym).slice(0,7)===ST.ym;
+  var y=ST.ym.slice(0,4);
+  if(ST.view==='annual') return String(ym).slice(0,4)===y;
+  if(ST.view==='ss') return seasonOf(ym)===y.slice(2)+'SS';
+  if(ST.view==='fw') return seasonOf(ym)===y.slice(2)+'FW';
+  return false;
+}
+function driveThumb(url){
+  url=String(url||'');
+  if(/^https?:\/\//.test(url) && url.indexOf('drive.google.com')<0) return url; // GitHub raw 등은 그대로
+  var m=url.match(/\/d\/([\w-]+)/)||url.match(/[?&]id=([\w-]+)/);
+  return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w600':'';
+}
+function csv(s){ return String(s||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function byId(list,key){ var o={}; list.forEach(function(r){ o[r[key]]=r; }); return o; }
+var PLACE=['ph1','ph2','ph3','ph4','ph5','ph6','ph7','ph8'];
+function placeClass(seed){ var h=0; for(var i=0;i<seed.length;i++) h=(h*31+seed.charCodeAt(i))%997; return PLACE[h%PLACE.length]; }
+
+/* main-photo fallback: ★ → 좋아요 최상위 → 근거 문서 썸네일 → placeholder */
+function mainImage(eid){
+  var imgs=DB.images.filter(function(im){ return csv(im.entity_ids).indexOf(eid)>=0; });
+  var starred=imgs.filter(function(im){ return String(im.is_main).toUpperCase()==='TRUE'; })
+    .sort(function(a,b){ return ymNum(b.year_month)-ymNum(a.year_month); })[0];
+  if(starred) return {url:driveThumb(starred.file_url), meta:starred};
+  var liked=imgs.slice().sort(function(a,b){ return (Number(b.likes)||0)-(Number(a.likes)||0); })[0];
+  if(liked) return {url:driveThumb(liked.file_url), meta:liked};
+  var doc=DB.documents.filter(function(d){ return csv(d.related_entities).indexOf(eid)>=0; })[0];
+  if(doc){ var u=driveThumb(doc.thumb_url)||driveThumb(doc.file_url); if(u) return {url:u, meta:null, doc:doc}; }
+  return {url:'', meta:null};
+}
+function phDiv(url, cls, seed, inner){
+  if(url) return '<div class="'+cls+' realph" style="background-image:url('+url+')">'+(inner||'')+'</div>';
+  return '<div class="'+cls+' '+placeClass(seed)+'">'+(inner||'')+'</div>';
+}
+
+/* window aggregate per entity */
+function aggScores(){
+  var per={};
+  DB.monthly_scores.forEach(function(r){
+    if(!inWindow(r.year_month)) return;
+    var e=r.entity_id;
+    if(!per[e]) per[e]={score:0, mentions:0, latest:null, first_seen:r.first_seen, bestRank:''};
+    per[e].score+=Number(r.total_score)||0;
+    per[e].mentions+=Number(r.mention_total)||0;
+    if(!per[e].latest || ymNum(r.year_month)>ymNum(per[e].latest.year_month)) per[e].latest=r;
+    if(r.first_seen && (!per[e].first_seen || r.first_seen<per[e].first_seen)) per[e].first_seen=r.first_seen;
+    var br=Number(r.best_rank);
+    if(br && (per[e].bestRank===''||br<per[e].bestRank)) per[e].bestRank=br;
+  });
+  return per;
+}
+
+/* ─────────── init + rendering ─────────── */
+var ENT={};
+function init(){
+  ENT=byId(DB.entities,'entity_id');
+  var months={};
+  DB.monthly_scores.forEach(function(r){ months[String(r.year_month).slice(0,7)]=1; });
+  ST.months=Object.keys(months).sort();
+  ST.ym=ST.months[ST.months.length-1]||null;
+  renderAll();
+}
+function renderAll(){
+  renderIssueBar(); renderDocs(); renderHero(); renderRising(); renderBrands(); renderSnsWall();
+  document.getElementById('detail').innerHTML='';
+}
+function renderIssueBar(){
+  var lbl=document.getElementById('issueLabel');
+  var i=ST.months.indexOf(ST.ym);
+  var prev=ST.months[i-1], next=ST.months[i+1];
+  var titles={monthly:'Issue — '+(ST.ym||'—'), ss:ST.ym?ST.ym.slice(0,4)+' SS Season 모아보기':'',
+    fw:ST.ym?ST.ym.slice(0,4)+' FW Season 모아보기':'', annual:'Annual '+(ST.ym?ST.ym.slice(0,4):''), all:'All-time 축적'};
+  var sub={monthly:(prev?'◂ '+prev:'')+(next?' · '+next+' ▸':'')||'only issue',
+    ss:'aggregated monthly issues', fw:'aggregated monthly issues',
+    annual:'12 issues aggregated', all:'every registered month'}[ST.view];
+  lbl.innerHTML=esc(titles[ST.view])+'<small>'+esc(sub)+'</small>';
+  var sn=document.getElementById('scopeNote');
+  if(ST.view!=='monthly'){
+    var ms=ST.months.filter(inWindow);
+    sn.innerHTML='<b>'+esc(titles[ST.view])+'</b> — 합산 대상: '+(ms.join(', ')||'없음')+' · 당월 호는 live로 계속 축적됩니다';
+    sn.classList.add('show');
+  } else sn.classList.remove('show');
+}
+var SRC_GROUP={ newsletter_kr:['newsletter_kr','lifestyle'], newsletter_gl:['newsletter_gl','editorial'],
+  wgsn:['wgsn','peclers'], rank:['retail_rank','lyst'], runway:['runway'] };
+function renderDocs(){
+  var srcs=SRC_GROUP[ST.srcTab]||[ST.srcTab];
+  var docs=DB.documents.filter(function(d){ return srcs.indexOf(d.source_id)>=0 && inWindow(d.year_month); })
+    .sort(function(a,b){ return ymNum(b.year_month)-ymNum(a.year_month); }).slice(0,8);
+  var el=document.getElementById('docCards');
+  el.innerHTML=docs.map(function(d){
+    var t=driveThumb(d.thumb_url)||driveThumb(d.file_url);
+    var thumb=t?'<a href="'+esc(d.file_url)+'" target="_blank"><img class="thumb" style="width:100%;object-fit:cover;aspect-ratio:16/9;display:block" src="'+t+'" onerror="this.remove()"></a>'
+      :'<div class="thumb '+placeClass(d.doc_id)+'"></div>';
+    var cn=(String(d.region).toUpperCase()==='CN')?'<span class="cnTag">CN</span>':'';
+    return '<div class="doc">'+thumb+'<div class="body">'+
+      (d.season?'<div class="season">'+esc(d.season)+'</div>':'')+
+      '<div class="src">'+esc(d.publisher||d.source_id)+' · '+esc(String(d.year_month).slice(0,7))+cn+'</div>'+
+      '<h5>'+esc(d.title)+'</h5><div class="sum">'+esc(d.summary)+'</div>'+
+      '<a class="open" href="'+esc(d.file_url)+'" target="_blank">Open original ↗</a></div></div>';
+  }).join('')||'<span class="legend">이 구간에 등록된 문서가 없습니다.</span>';
+}
+function renderHero(){
+  var per=aggScores();
+  var movs=DB.entities.filter(function(e){ return e.axis==='movement'; }).map(function(m){
+    var kids=DB.entities.filter(function(e){ return e.parent_movement===m.entity_id && per[e.entity_id]; });
+    var self=per[m.entity_id];
+    var latest=Math.max.apply(null,[0].concat(kids.concat(self?[m]:[]).map(function(e){
+      var p=per[e.entity_id]; return p&&p.latest?ymNum(p.latest.year_month):0; })));
+    return {m:m, links:kids.length, score:(self?self.score:0), latest:latest, kids:kids,
+      first:(self?self.first_seen:'')||''};
+  }).filter(function(x){ return x.links>0||x.score>0; })
+    .sort(function(a,b){ return b.links-a.links || b.latest-a.latest || b.score-a.score; });
+  var el=document.getElementById('hero');
+  if(!movs.length){ el.innerHTML='<div><div class="eyebrow">Movement of the Month</div><h2 class="serif">신호 수집 중</h2><p class="dek">movement로 승격된 트렌드가 아직 없습니다. 가장 많이 겹치는 요소가 자동으로 이 자리에 올라옵니다.</p></div>'; return; }
+  var top=movs[0], runner=movs[1];
+  var evDocs=DB.documents.filter(function(d){
+    var rel=csv(d.related_entities);
+    return inWindow(d.year_month)&&(rel.indexOf(top.m.entity_id)>=0||top.kids.some(function(k){return rel.indexOf(k.entity_id)>=0;}));
+  }).sort(function(a,b){ return ymNum(b.year_month)-ymNum(a.year_month); }).slice(0,3);
+  var evHtml=evDocs.map(function(d){
+    var t=driveThumb(d.thumb_url)||driveThumb(d.file_url);
+    return '<div class="evrow">'+phDiv(t,'ph',d.doc_id)+'<div><b>'+esc(d.title)+'</b>'+
+      '<div class="m">'+esc(d.publisher||d.source_id)+' · '+esc(String(d.year_month).slice(0,7))+'</div></div></div>';
+  }).join('');
+  if(runner) evHtml+='<div class="evrow">'+phDiv('','ph',runner.m.entity_id)+'<div><b>Runner-up — '+esc(runner.m.name_en||runner.m.name_kr)+'</b>'+
+    '<div class="m">'+runner.links+' cross-link'+(runner.links>1?'s':'')+'</div></div></div>';
+  el.innerHTML='<div><div class="eyebrow">Movement of the Month · default: most cross-linked · latest first</div>'+
+    '<h2 class="serif">'+esc(top.m.name_en||top.m.name_kr)+'</h2>'+
+    '<p class="dek">'+esc(top.m.proposal||top.m.notes||'')+'</p>'+
+    '<div class="numbers"><div class="num"><div class="v up">'+top.links+'</div><div class="k">Linked Signals</div></div>'+
+    '<div class="num"><div class="v">'+esc(top.first||'—')+'</div><div class="k">First Seen</div></div>'+
+    '<div class="num"><div class="v">'+esc(top.score.toFixed(2))+'</div><div class="k">Window Score</div></div></div></div>'+
+    '<div class="evidence"><div class="k">Evidence · Real Signals</div>'+evHtml+'</div>';
+}
+function renderRising(){
+  var per=aggScores();
+  var list=Object.keys(per).map(function(eid){ return {eid:eid, e:ENT[eid], p:per[eid]}; })
+    .filter(function(x){ return x.e && x.e.axis!=='movement' && x.e.axis!=='runway_theme'; })
+    .filter(function(x){ return ST.axis==='all'||x.e.axis===ST.axis; })
+    .sort(function(a,b){ return (String(b.e.pinned).toUpperCase()==='TRUE')-(String(a.e.pinned).toUpperCase()==='TRUE') || b.p.score-a.p.score; })
+    .slice(0,8);
+  document.getElementById('rnScope').textContent=(ST.axis==='all'?'all axes':ST.axis)+' · click a card';
+  document.getElementById('risingGrid').innerHTML=list.map(function(x){
+    var v=x.p.latest?x.p.latest.verdict:'New';
+    var bcls=v==='Rising'?'rising':(v==='New'?'new':'ongoing');
+    var img=mainImage(x.eid);
+    return '<div class="tcard" data-eid="'+x.eid+'">'+phDiv(img.url,'ph',x.eid,'<span class="badge '+bcls+'">'+esc(v)+'</span>')+
+      '<h4>'+esc(x.e.name_en||x.e.name_kr)+'</h4>'+
+      '<div class="meta">'+esc(x.e.axis)+' · first seen <span class="mom">'+esc(x.p.first_seen||'—')+'</span>'+
+      (x.p.bestRank?' · rank #'+x.p.bestRank:'')+'</div></div>';
+  }).join('')||'<span class="legend">이 구간에 점수가 있는 트렌드가 없습니다 — 월배치를 실행했는지 확인하세요.</span>';
+  document.querySelectorAll('#risingGrid .tcard').forEach(function(c){
+    c.addEventListener('click', function(){ renderDetail(c.dataset.eid); });
+  });
+}
+function renderDetail(eid){
+  var e=ENT[eid]; if(!e) return;
+  var per=aggScores(); var p=per[eid]||{latest:null,first_seen:'',bestRank:'',score:0};
+  var L=p.latest||{};
+  var img=mainImage(eid);
+  var others=DB.images.filter(function(im){ return csv(im.entity_ids).indexOf(eid)>=0; })
+    .filter(function(im){ return !img.meta||im.image_id!==img.meta.image_id; }).slice(0,3);
+  var rel=others.map(function(im){
+    return phDiv(driveThumb(im.file_url),'ph',im.image_id,'<span class="srcl">'+esc(im.source_id)+'</span>');
+  }).join('')||phDiv('','ph','slot','<span class="srcl">(slot: next photo)</span>');
+  var accounts=DB.images.filter(function(im){ return csv(im.entity_ids).indexOf(eid)>=0&&im.account; })
+    .map(function(im){ return (String(im.is_celeb).toUpperCase()==='TRUE'&&im.celeb_name)?im.celeb_name:im.account; });
+  accounts=accounts.filter(function(v,i){ return accounts.indexOf(v)===i; }).slice(0,4);
+  var docs=DB.documents.filter(function(d){ return csv(d.related_entities).indexOf(eid)>=0; }).map(function(d){ return d.doc_id; });
+  var v=L.verdict||'New'; var bcls=v==='Rising'?'rising':(v==='New'?'new':'ongoing');
+  var d=document.getElementById('detail');
+  d.innerHTML='<div class="sec"><h3>Trend Card</h3><span class="closebtn" id="dClose">Close ✕</span></div>'+
+   '<div class="article"><div class="main">'+phDiv(img.url,'ph',eid)+
+   '<div class="credit">'+(img.meta?esc((img.meta.account||img.meta.source_id)+' · '+String(img.meta.year_month).slice(0,7)):'no photo registered — CURATE 탭에서 업로드')+'</div>'+
+   '<div class="related">'+rel+'</div></div>'+
+   '<div class="scorecard"><div class="head"><span class="badge '+bcls+'">'+esc(v)+'</span>'+
+   '<span class="pill">'+esc(e.axis)+'</span>'+(e.category_l1?'<span class="pill">'+esc(e.category_l1+(e.category_l2?' › '+e.category_l2:''))+'</span>':'')+'</div>'+
+   '<h4>'+esc(e.name_en||e.name_kr)+'</h4>'+
+   '<div class="scoregrid">'+
+   '<div><div class="k">MoM</div><div class="v'+(Number(L.mom_pct)>0?' up':'')+'">'+(L.mom_pct!==''&&L.mom_pct!==undefined?esc(L.mom_pct)+'%':'—')+'</div></div>'+
+   '<div><div class="k">YoY</div><div class="v">'+(L.yoy_pct?esc(L.yoy_pct)+'%':'—')+'</div></div>'+
+   '<div><div class="k">Volume</div><div class="v">'+esc(L.volume_badge||'—')+'</div></div>'+
+   '<div><div class="k">Diffusion</div><div class="v">'+esc(L.diffusion_badge||'—')+'</div></div>'+
+   '<div><div class="k">Saturation</div><div class="v">'+esc(L.saturation_badge||'—')+'</div></div>'+
+   '<div><div class="k">Best Rank</div><div class="v">'+(p.bestRank?'#'+p.bestRank:'—')+'</div></div></div>'+
+   (accounts.length?'<div class="wornby">Seen on — <b>'+esc(accounts.join(', '))+'</b></div>':'')+
+   '<div class="sources">Sources — <b>'+esc(L.sources_present||'')+'</b> · first seen <b>'+esc(p.first_seen||'—')+'</b>'+
+   (docs.length?' · docs <b>'+esc(docs.join(', '))+'</b>':'')+'</div>'+
+   (e.proposal?'<div class="apply"><div class="k">Brand Application</div><p>'+esc(e.proposal)+'</p></div>':'')+
+   '</div></div>';
+  document.getElementById('dClose').addEventListener('click', function(){ d.innerHTML=''; });
+  d.scrollIntoView({behavior:'smooth'});
+}
+function renderBrands(){
+  var brandReg=byId(DB.brands,'brand_name');
+  var per={};
+  DB.brand_scores.forEach(function(r){
+    if(!inWindow(r.year_month)) return;
+    var n=r.brand_name;
+    if(!per[n]) per[n]={score:0, links:0, latest:null, bestRank:''};
+    per[n].score+=Number(r.total_score)||0;
+    per[n].links=Math.max(per[n].links, Number(r.trend_link_count)||0);
+    if(!per[n].latest||ymNum(r.year_month)>ymNum(per[n].latest.year_month)) per[n].latest=r;
+    var br=Number(r.best_rank);
+    if(br&&(per[n].bestRank===''||br<per[n].bestRank)) per[n].bestRank=br;
+  });
+  var list=Object.keys(per).map(function(n){
+    var reg=brandReg[n]||{};
+    return {n:n, p:per[n], origin:reg.origin||'', tier:reg.tier||(per[n].latest?per[n].latest.tier:''), linked:per[n].latest?per[n].latest.linked_entities:''};
+  });
+  // registry-linked brands without score rows (e.g. document-sourced): show as Watch
+  var scoredEnt=aggScores();
+  DB.brands.forEach(function(reg){
+    if(per[reg.brand_name]) return;
+    var links=csv(reg.linked_entities).filter(function(id){ return scoredEnt[id]; });
+    if(!links.length) return;
+    list.push({n:reg.brand_name, origin:reg.origin||'', tier:reg.tier||'',
+      linked:links.join(', '), p:{score:0, links:links.length, latest:{verdict:'Watch'}, bestRank:''}});
+  });
+  list.sort(function(a,b){ return b.p.links-a.p.links||b.p.score-a.p.score; });
+  function card(x){
+    var v=x.p.latest?x.p.latest.verdict:'Ongoing';
+    var bcls=v==='Rising'?'rising':(v==='New'?'new':'ongoing');
+    var names=csv(x.linked).map(function(id){ return ENT[id]?(ENT[id].name_en||ENT[id].name_kr):id; }).slice(0,3);
+    return '<div class="bcard"><div class="tier">'+esc((x.tier||'')+(x.origin?' · '+x.origin:''))+'</div><h4>'+esc(x.n)+'</h4>'+
+      '<div class="links">'+(names.length?'Linked to <b>'+esc(names.join(', '))+'</b>':'No trend links yet')+
+      (x.p.bestRank?' · rank <b>#'+x.p.bestRank+'</b>':'')+'</div>'+
+      '<div class="row"><span class="badge '+bcls+'">'+esc(v)+'</span><span class="mom" style="color:var(--ink)">'+x.p.links+' link'+(x.p.links!==1?'s':'')+'</span></div></div>';
+  }
+  document.getElementById('brandsKR').innerHTML=list.filter(function(x){return x.origin==='KR';}).slice(0,6).map(card).join('')||'<span class="legend">KR 브랜드 신호 없음</span>';
+  document.getElementById('brandsGL').innerHTML=list.filter(function(x){return x.origin!=='KR';}).slice(0,6).map(card).join('')||'<span class="legend">Global 브랜드 신호 없음</span>';
+}
+function renderSnsWall(filter){
+  filter=filter||'all';
+  var imgs=DB.images.filter(function(im){
+    if(filter==='celeb') return String(im.is_celeb).toUpperCase()==='TRUE';
+    if(filter!=='all') return im.source_id===filter;
+    return ['insta','xiaohongshu','celeb'].indexOf(im.source_id)>=0;
+  }).sort(function(a,b){ return ymNum(b.year_month)-ymNum(a.year_month); }).slice(0,48);
+  document.getElementById('snsWall').innerHTML=imgs.map(function(im){
+    return phDiv(driveThumb(im.file_url),'ph',im.image_id,
+      '<span class="srcl">'+esc(im.source_id)+(im.account?' · '+esc(im.account):'')+'</span>');
+  }).join('')||'<span class="legend">등록된 SNS 사진이 없습니다.</span>';
+}
+function renderDataTable(){
+  var rows=DB.monthly_scores.filter(function(r){ return inWindow(r.year_month); })
+    .sort(function(a,b){ return (Number(b.total_score)||0)-(Number(a.total_score)||0); }).slice(0,100);
+  var cols=['year_month','entity_id','axis','total_score','mention_total','mom_pct','verdict','stage_reached','best_rank','first_seen'];
+  document.getElementById('dataTable').innerHTML='<tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr>'+
+    rows.map(function(r){ return '<tr>'+cols.map(function(c){
+      var name=(c==='entity_id'&&ENT[r[c]])?r[c]+' '+(ENT[r[c]].name_en||''):r[c];
+      return '<td>'+esc(name)+'</td>'; }).join('')+'</tr>'; }).join('');
+}
+
+/* ─────────── events ─────────── */
+document.getElementById('prevIssue').addEventListener('click', function(){
+  var i=ST.months.indexOf(ST.ym); if(i>0){ ST.ym=ST.months[i-1]; renderAll(); }});
+document.getElementById('nextIssue').addEventListener('click', function(){
+  var i=ST.months.indexOf(ST.ym); if(i<ST.months.length-1){ ST.ym=ST.months[i+1]; renderAll(); }});
+document.getElementById('viewBtns').addEventListener('click', function(ev){
+  var b=ev.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#viewBtns button').forEach(function(x){x.classList.remove('on');});
+  b.classList.add('on'); ST.view=b.dataset.v; renderAll();
+});
+document.getElementById('srcTabs').addEventListener('click', function(ev){
+  var b=ev.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#srcTabs button').forEach(function(x){x.classList.remove('on');});
+  b.classList.add('on'); ST.srcTab=b.dataset.t; renderDocs();
+});
+document.getElementById('axisNav').addEventListener('click', function(ev){
+  var a=ev.target.closest('a[data-axis]'); if(!a) return;
+  ev.preventDefault();
+  document.querySelectorAll('#axisNav a[data-axis]').forEach(function(x){x.classList.remove('on');});
+  a.classList.add('on'); ST.axis=a.dataset.axis; renderRising();
+});
+document.getElementById('navSnsLib').addEventListener('click', function(e){
+  e.preventDefault();
+  var s=document.getElementById('snsLib'); s.classList.toggle('open');
+  if(s.classList.contains('open')){ renderSnsWall(); s.scrollIntoView({behavior:'smooth'}); }
+});
+document.getElementById('snsLibClose').addEventListener('click', function(){
+  document.getElementById('snsLib').classList.remove('open');
+});
+document.getElementById('snsFilters').addEventListener('click', function(ev){
+  var b=ev.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#snsFilters button').forEach(function(x){x.classList.remove('on');});
+  b.classList.add('on'); renderSnsWall(b.dataset.f);
+});
+document.getElementById('navData').addEventListener('click', function(e){
+  e.preventDefault();
+  var d=document.getElementById('dataView');
+  d.style.display=d.style.display==='none'?'block':'none';
+  if(d.style.display==='block'){ renderDataTable(); d.scrollIntoView({behavior:'smooth'}); }
+});
+document.getElementById('dataClose').addEventListener('click', function(){
+  document.getElementById('dataView').style.display='none';
+});
+
+loadAll();
+
+</script>
+</body>
+</html>
