@@ -32,6 +32,13 @@ svg#edges{position:absolute; inset:0; width:100%; height:100%; pointer-events:no
 
 .node{position:absolute; transition:opacity .5s, transform .5s; opacity:0; transform:scale(.85)}
 .node.show{opacity:1; transform:scale(1)}
+.node.bundle{padding:8px 10px; background:#fff}
+.node.bundle::before,.node.bundle::after{content:''; position:absolute; inset:0; background:#fff;
+  border:1px solid var(--ink); z-index:-1}
+.node.bundle::before{transform:rotate(1.6deg) translate(3px,3px)}
+.node.bundle::after{transform:rotate(-1.2deg) translate(-3px,4px)}
+.node.bundle .cnt{font-family:'Playfair Display',serif; font-size:20px}
+.node.bundle .lbl{font-size:10px; color:var(--sub); letter-spacing:.08em}
 .ntags{position:absolute; top:-11px; right:-8px; display:flex; gap:3px; z-index:2}
 .ntag{cursor:pointer; font-size:8px; font-weight:800; letter-spacing:.08em; padding:2px 6px; color:#fff;
   box-shadow:1px 1px 0 #00000025; transform:rotate(2deg)}
@@ -172,6 +179,8 @@ monthly: {
     {tags:['KR','MLB'], id:'img2', t:'2026-07', x:880, y:300, type:'photo', img:TH.yt, plat:'YOUTUBE', cap:'\ub098\ub9cc\uc758 \uc824\ub9ac\uc288\uc988 \ub9cc\ub4e4\uae30 \u00b7 \uc870\ud68c 2.8\ub9cc \u00b7 2026-07'},
     {tags:['KR'], id:'br',   t:'2026-06', x:920, y:120, type:'brand', tier:'NICHE \u00b7 KR', h:'HEAVENLY JELLY'},
     {id:'mv',   t:'2026-07', x:1170, y:190, type:'mv', k:'PARENT MOVEMENT', h:'Customizing'},
+    {id:'bund1', t:'2026-05', x:640, y:120, type:'bundle', tags:['KR'], cnt:'\u00d712',
+      lbl:'INSTA \ubb36\uc74c \u2014 #jelly_shoes \uacc4\uc5f4 \uac8c\uc2dc\ubb3c 12\uac74', active:['2026-05','2026-06','2026-07']},
     {id:'key3', t:'2026-04', x:900, y:640, type:'key', k:'KEY TREND \u00b7 style',
       h:'Ballet Core', m:'\ub9c8\uc9c0\ub9c9 \ud65c\ub3d9 2026-04', badge:'WATCH', active:['2026-04']},
     {tags:['KR'], id:'rank1',t:'2026-06', x:120, y:560, type:'photo', img:TH.musinsa13, plat:'RANKING',
@@ -186,6 +195,7 @@ monthly: {
     {a:'img2', b:'key', key:true},
     {a:'doc2', b:'br', label:'\uc5f0\uad00 \ube0c\ub79c\ub4dc'}, {a:'br', b:'key'},
     {a:'key', b:'mv', key:true, label:'\ub864\uc5c5'},
+    {a:'bund1', b:'key', key:false, label:''},
     {a:'rank1', b:'key2', key:true, label:'RANKED_IN \u2014 1~3\uc704 \uad6c\uac04 \ud06c\ub86d'}
   ]
 },
@@ -221,6 +231,12 @@ function el(html){ var d=document.createElement('div'); d.innerHTML=html; return
 function nodeHtml(n){
   var tagHtml=(n.tags&&n.tags.length)?'<span class="ntags">'+n.tags.map(function(t){
     return '<span class="ntag '+t+'">'+(t==='ST'?'SERGIO T.':t)+'</span>'; }).join('')+'</span>':'';
+  if(n.type==='bundle'){
+    var tagHtml2=(n.tags&&n.tags.length)?'<span class="ntags">'+n.tags.map(function(t){
+      return '<span class="ntag '+t+'">'+(t==='ST'?'SERGIO T.':t)+'</span>'; }).join('')+'</span>':'';
+    return '<div class="node bundle" id="n-'+n.id+'" style="left:'+n.x+'px;top:'+n.y+'px">'+
+      tagHtml2+'<span class="when">'+n.t+'</span><div class="cnt">'+n.cnt+'</div><div class="lbl">'+n.lbl+'</div></div>';
+  }
   var when='<span class="when">'+n.t+'</span>'+tagHtml;
   if(n.type==='doc') return '<div class="node n-doc" id="n-'+n.id+'" style="left:'+n.x+'px;top:'+n.y+'px">'+when+
     '<img src="'+n.img+'"><div class="cap"><span class="src">'+n.src+'</span><br>'+n.cap+'</div></div>';
